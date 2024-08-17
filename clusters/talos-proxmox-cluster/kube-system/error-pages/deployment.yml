@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: kube-system
+  name: error-pages
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: error-pages
+  template:
+    metadata:
+      labels:
+        app: error-pages
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - error-pages
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: error-pages
+        image: ghcr.io/tarampampam/error-pages:3.2
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 150m
+          requests:
+            cpu: 150m
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: TEMPLATE_NAME
+          value: noise
+        - name: SHOW_DETAILS
+          value: 'true'
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3

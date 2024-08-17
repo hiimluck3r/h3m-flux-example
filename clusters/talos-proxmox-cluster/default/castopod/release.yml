@@ -1,0 +1,47 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: castopod
+  namespace: default
+spec:
+  interval: 1m
+  timeout: 5m0s
+  chart:
+    spec:
+      chart: castopod
+      version: '1.12.x'
+      sourceRef:
+        kind: HelmRepository
+        name: h2m
+        namespace: default
+      interval: 1m
+  values:
+    env:
+      https:
+        enabled: false
+      CP_BASEURL: "http://castopod.novodigital.ru"
+      CP_ANALYTICS_SALT: ""
+    serviceAccount:
+      # -- Specifies whether a service account should be created
+      create: false
+      # -- Annotations to add to the service account
+      annotations: {}
+      # -- The name of the service account to use.
+      # If not set and create is true, a name is generated using the fullname template
+      name: ""
+    httpRoute:
+      enabled: true
+      parentRefs:
+      - name: cilium
+        group: gateway.networking.k8s.io
+        namespace: kube-system
+      hostnames:
+      - castopod.novodigital.ru
+      rules:
+      - matches:
+        - path:
+            type: PathPrefix
+            value: /
+    persistence:
+      enabled: true
+      size: 100G
